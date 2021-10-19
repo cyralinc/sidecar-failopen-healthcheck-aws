@@ -1,0 +1,4 @@
+.venv
+.git
+cloudbuild*
+README.md
