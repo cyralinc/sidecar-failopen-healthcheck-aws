@@ -9,7 +9,7 @@ subnet.
 To build the lambda image, run `make build`. It'll take the image name and tag from the `.env` file.
 
 ## Permissions
-The lambda needs the following permissions to run:
+The permissions required for the execution role are the following:
 
 - secretsmanager:GetSecretValue
   - for accessing the credentials for the database
