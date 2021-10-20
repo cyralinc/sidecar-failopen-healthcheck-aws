@@ -7,3 +7,51 @@ subnet.
 ## Building
 
 To build the lambda image, run `make build`. It'll take the image name and tag from the `.env` file.
+
+## Permissions
+The lambda needs the following permissions to run:
+
+- secretsmanager:GetSecretValue
+  - for accessing the credentials for the database
+- ec2:CreateNetworkInterface
+- ec2:DescribeNetworkInterfaces
+- ec2:DeleteNetworkInterface
+  - for creating and interface on the VPC and getting access to the sidecar
+- logs:PutLogEvents
+- logs:CreateLogStream
+- logs:CreateLogGroup
+- logs:DescribeLogStreams
+  - for observability
+- cloudwatch:PutMetricData
+  - for writing to the metric that will be the healthcheck
+
+On cloudformation, this is the general format of the permissions:
+```yaml
+- Effect: Allow
+  Action:
+    - "secretsmanager:GetSecretValue"
+  Resource:
+    - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${DBSecretLocation}*'
+
+- Effect: Allow
+  Action:
+    - ec2:CreateNetworkInterface
+    - ec2:DescribeNetworkInterfaces
+    - ec2:DeleteNetworkInterface
+  Resource: '*'
+
+- Effect: Allow
+  Action:
+    - logs:PutLogEvents
+    - logs:CreateLogStream
+    - logs:CreateLogGroup
+    - logs:DescribeLogStreams
+  Resource:
+    - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+
+- Effect: Allow
+  Action:
+    - cloudwatch:PutMetricData
+  Resource: '*'
+ 
+```
