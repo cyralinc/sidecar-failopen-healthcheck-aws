@@ -73,7 +73,7 @@ def try_connection(  # pylint: disable=too-many-arguments
     host: str,
     port: int,
     username: str,
-    dbname: str,
+    database: str,
     password: str,
     timeout: int = 2
 ):
@@ -86,7 +86,7 @@ def try_connection(  # pylint: disable=too-many-arguments
         cnx = connector.connect(
             connection_timeout=timeout,
             user=username,
-            database=dbname,
+            database=database,
             password=password,
             host=host,
             port=port
@@ -122,6 +122,10 @@ def lambda_handler(
             session,
             str(session.region_name)
         )
+
+        db_info["host"] = os.environ["DBHOST"]
+        db_info["port"] = os.environ["DBPORT"]
+        db_info["database"] = os.environ["DBDATABASE"]
 
         # uses the same credentials but different address for sidecar connection
         sidecar_info = db_info.copy()
