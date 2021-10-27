@@ -18,7 +18,7 @@ def observe(client, sidecar_address, metric: str, status: int) -> None:
     """
     Observe logs the status value on the metric
     """
-    healthcheck_name = os.environ['CFSTACKNAME']
+    healthcheck_name = os.environ['CF_STACK_NAME']
     return client.put_metric_data(
         Namespace='Route53PrivateHealthCheck',
         MetricData=[{
@@ -119,14 +119,14 @@ def lambda_handler(
     def handler(_, __):
         # retrieves the configuration for the db from secret manager
         db_info: Dict[str, Any] = get_database_configuration(
-            os.environ["DBSECRET"],
+            os.environ["REPO_SECRET"],
             session,
             str(session.region_name)
         )
 
-        db_info["host"] = os.environ["DBHOST"]
-        db_info["port"] = os.environ["DBPORT"]
-        db_info["database"] = os.environ["DBDATABASE"]
+        db_info["host"] = os.environ["REPO_ADDRESS"]
+        db_info["port"] = os.environ["REPO_PORT"]
+        db_info["database"] = os.environ["REPO_DATABASE"]
 
         # uses the same credentials but different address for sidecar connection
         sidecar_info = db_info.copy()
@@ -200,9 +200,9 @@ def entrypoint(event, context):
     """
     session = boto3.Session()
 
-    sidecar_host = os.environ['SIDECARADDRESS']
-    sidecar_port = int(os.environ['SIDECARPORT'])
-    number_of_retries = int(os.environ['NRETRIES'])
+    sidecar_host = os.environ['SIDECAR_ADDRESS']
+    sidecar_port = int(os.environ['SIDECAR_PORT'])
+    number_of_retries = int(os.environ['N_RETRIES'])
 
     lambda_handler(
         session,
