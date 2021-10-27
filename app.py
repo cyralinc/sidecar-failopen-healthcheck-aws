@@ -136,7 +136,7 @@ def lambda_handler(
         if number_of_retries < 0:
             raise Exception("number of retries must be bigger than 0")
         for i in range(number_of_retries + 1):
-            logger.info(f"attempt {i+1} out of {number_of_retries}")
+            logger.info(f"attempt {i+1} out of {number_of_retries + 1}")
 
             # tries to connect. If successful, it's done, otherwise retry.
             done, status = full_connection(db_info, sidecar_info)
