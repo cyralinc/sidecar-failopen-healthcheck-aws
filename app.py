@@ -62,7 +62,8 @@ def get_database_configuration(
         if 'SecretString' in get_secret_value_response:
             secret = get_secret_value_response['SecretString']
             j = json.loads(secret)
-            return j
+
+            return {"username": j["username"], "password": j["password"]}
         logger.error(
             f"Secret in wrong format found on {secret_name}")
         raise Exception(
@@ -100,7 +101,7 @@ def try_connection(  # pylint: disable=too-many-arguments
             f'successful connection connecting to mysql on {host}:{port}')
 
     except connector.Error as err:
-        logger.info(f'error connecting to mysql on {host}:{port}:', err)
+        logger.info(f'error connecting to mysql on {host}:{port}: {err}')
         raise err
 
 
@@ -132,17 +133,19 @@ def lambda_handler(
         sidecar_info["host"] = sidecar_host
         sidecar_info["port"] = sidecar_port
 
-        for i in range(number_of_retries):
+        if number_of_retries < 0:
+            raise Exception("number of retries must be bigger than 0")
+        for i in range(number_of_retries + 1):
             logger.info(f"attempt {i+1} out of {number_of_retries}")
 
             # tries to connect. If successful, it's done, otherwise retry.
-            status, done = full_connection(db_info, sidecar_info)
+            done, status = full_connection(db_info, sidecar_info)
             if done:
                 break
 
             logger.info("health check failed, retrying...")
-            observe(cloudwatch_client, sidecar_host,
-                    os.environ["SIDECARNAME"], status)
+        observe(cloudwatch_client, sidecar_host,
+                os.environ["SIDECARNAME"], status)
     return handler
 
 
@@ -189,10 +192,6 @@ def full_connection(
                 f"Sidecar and DB failing, setting metric as healthy. Error: {err_db}")
             return (False, 1)
 
-    except:  # pylint: disable=bare-except
-        logger.error(
-            "An error occurred while performing the health check.")
-        return (False, 1)
 
 
 def entrypoint(event, context):
