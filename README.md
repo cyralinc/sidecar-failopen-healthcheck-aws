@@ -11,7 +11,7 @@ Cyral Sidecars.
 
 ## Limitations
 
-See all the fail open feature limitations [here(https://github.com/cyralinc/cloudformation-sidecar-failopen#Limitations)].
+See all the fail open feature limitations [here](https://github.com/cyralinc/cloudformation-sidecar-failopen#Limitations).
 
 ## Build
 
