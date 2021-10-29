@@ -145,7 +145,7 @@ def lambda_handler(
 
             logger.info("health check failed, retrying...")
         observe(cloudwatch_client, sidecar_host,
-                os.environ["SIDECARNAME"], status)
+                os.environ["SIDECAR_NAME"], status)
     return handler
 
 
