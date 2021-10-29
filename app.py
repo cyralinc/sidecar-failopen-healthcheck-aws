@@ -18,7 +18,7 @@ def observe(client, sidecar_address, metric: str, status: int) -> None:
     """
     Observe logs the status value on the metric
     """
-    healthcheck_name = os.environ['CFSTACKNAME']
+    healthcheck_name = os.environ['CF_STACK_NAME']
     return client.put_metric_data(
         Namespace='Route53PrivateHealthCheck',
         MetricData=[{
@@ -62,7 +62,8 @@ def get_database_configuration(
         if 'SecretString' in get_secret_value_response:
             secret = get_secret_value_response['SecretString']
             j = json.loads(secret)
-            return j
+
+            return {"username": j["username"], "password": j["password"]}
         logger.error(
             f"Secret in wrong format found on {secret_name}")
         raise Exception(
@@ -73,7 +74,7 @@ def try_connection(  # pylint: disable=too-many-arguments
     host: str,
     port: int,
     username: str,
-    dbname: str,
+    database: str,
     password: str,
     timeout: int = 2
 ):
@@ -86,7 +87,7 @@ def try_connection(  # pylint: disable=too-many-arguments
         cnx = connector.connect(
             connection_timeout=timeout,
             user=username,
-            database=dbname,
+            database=database,
             password=password,
             host=host,
             port=port
@@ -100,7 +101,7 @@ def try_connection(  # pylint: disable=too-many-arguments
             f'successful connection connecting to mysql on {host}:{port}')
 
     except connector.Error as err:
-        logger.info(f'error connecting to mysql on {host}:{port}:', err)
+        logger.info(f'error connecting to mysql on {host}:{port}: {err}')
         raise err
 
 
@@ -118,27 +119,33 @@ def lambda_handler(
     def handler(_, __):
         # retrieves the configuration for the db from secret manager
         db_info: Dict[str, Any] = get_database_configuration(
-            os.environ["DBSECRET"],
+            os.environ["REPO_SECRET"],
             session,
             str(session.region_name)
         )
+
+        db_info["host"] = os.environ["REPO_ADDRESS"]
+        db_info["port"] = os.environ["REPO_PORT"]
+        db_info["database"] = os.environ["REPO_DATABASE"]
 
         # uses the same credentials but different address for sidecar connection
         sidecar_info = db_info.copy()
         sidecar_info["host"] = sidecar_host
         sidecar_info["port"] = sidecar_port
 
-        for i in range(number_of_retries):
-            logger.info(f"attempt {i+1} out of {number_of_retries}")
+        if number_of_retries < 0:
+            raise Exception("number of retries must be bigger than 0")
+        for i in range(number_of_retries + 1):
+            logger.info(f"attempt {i+1} out of {number_of_retries + 1}")
 
             # tries to connect. If successful, it's done, otherwise retry.
-            status, done = full_connection(db_info, sidecar_info)
+            done, status = full_connection(db_info, sidecar_info)
             if done:
                 break
 
             logger.info("health check failed, retrying...")
-            observe(cloudwatch_client, sidecar_host,
-                    os.environ["SIDECARNAME"], status)
+        observe(cloudwatch_client, sidecar_host,
+                os.environ["SIDECAR_NAME"], status)
     return handler
 
 
@@ -185,10 +192,6 @@ def full_connection(
                 f"Sidecar and DB failing, setting metric as healthy. Error: {err_db}")
             return (False, 1)
 
-    except:  # pylint: disable=bare-except
-        logger.error(
-            "An error occurred while performing the health check.")
-        return (False, 1)
 
 
 def entrypoint(event, context):
@@ -197,9 +200,9 @@ def entrypoint(event, context):
     """
     session = boto3.Session()
 
-    sidecar_host = os.environ['SIDECARADDRESS']
-    sidecar_port = int(os.environ['SIDECARPORT'])
-    number_of_retries = int(os.environ['NRETRIES'])
+    sidecar_host = os.environ['SIDECAR_ADDRESS']
+    sidecar_port = int(os.environ['SIDECAR_PORT'])
+    number_of_retries = int(os.environ['N_RETRIES'])
 
     lambda_handler(
         session,
