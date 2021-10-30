@@ -1,31 +1,48 @@
-# Lambda Health-Checker
+# AWS Health Check for Cyral Sidecars
 
-This is a lambda function that makes a health-check on a cyral sidecar that is connected to a `mysql` repository.
-This lambda function needs access to CloudWatch, SecretsManager and to the sidecar in question, be it in a private or public
-subnet.
+## Introduction
 
-## Building
+This repository contains a lambda function that is part of the sidecar fail open feature.
+Refer to the [sidecar fail open deployment template](https://github.com/cyralinc/cloudformation-sidecar-failopen)
+for more information and overall architectural guidelines.
 
-To build the lambda image, run `make build`. It'll take the image name and tag from the `.env` file.
+The lambda function contained here offers health check verification for `MySQL` databases that are bound to
+Cyral Sidecars.
 
-## Permissions
-The permissions required for the execution role are the following:
+## Limitations
 
-- secretsmanager:GetSecretValue
-  - for accessing the credentials for the database
-- ec2:CreateNetworkInterface
-- ec2:DescribeNetworkInterfaces
-- ec2:DeleteNetworkInterface
-  - for creating and interface on the VPC and getting access to the sidecar
-- logs:PutLogEvents
-- logs:CreateLogStream
-- logs:CreateLogGroup
-- logs:DescribeLogStreams
-  - for observability
-- cloudwatch:PutMetricData
-  - for writing to the metric that will be the healthcheck
+See all the fail open feature limitations [here](https://github.com/cyralinc/cloudformation-sidecar-failopen#Limitations).
 
-On cloudformation, this is the general format of the permissions:
+## Build
+
+This lambda is packaged as a Docker image and is publicly available at `gcr.io/cyralpublic/health-check-aws:<version>`
+where `<version>` is the version tag as seen in this repository.
+
+In order to **build and publish** this lambda to a different repository, edit the `.env` file informing the desired
+image and tag and then run `make build`.
+
+## Execution Requirements
+
+In order to properly execute, the lambda needs IAM permissions to access AWS CloudWatch and AWS SecretsManager.
+It also needs networking access to the target sidecar, target repository and also to AWS CloudWatch and
+AWS SecretsManager.
+
+The detailed IAM permissions required by the execution role are the following:
+
+- AWS SecretsManager: required to access the database credentials
+  - `secretsmanager:GetSecretValue`
+- AWS EC2: required to create the network interface so the lambda can access the VPC
+  - `ec2:CreateNetworkInterface`
+  - `ec2:DescribeNetworkInterfaces`
+  - `ec2:DeleteNetworkInterface`
+- AWS CloudWatch: required to log events and write the health check metrics
+  - `logs:PutLogEvents`
+  - `logs:CreateLogStream`
+  - `logs:CreateLogGroup`
+  - `logs:DescribeLogStreams`
+  - `cloudwatch:PutMetricData`
+
+The necessary permissions can be described as follows in CloudFormation:
 ```yaml
 - Effect: Allow
   Action:
