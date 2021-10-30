@@ -6,7 +6,7 @@ This repository contains a lambda function that is part of the sidecar fail open
 Refer to the [sidecar fail open deployment template](https://github.com/cyralinc/cloudformation-sidecar-failopen)
 for more information and overall architectural guidelines.
 
-The lambda function contained here offers health check verification for `MySQL` databases that are bind to
+The lambda function contained here offers health check verification for `MySQL` databases that are bound to
 Cyral Sidecars.
 
 ## Limitations
