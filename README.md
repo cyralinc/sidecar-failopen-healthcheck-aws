@@ -15,11 +15,31 @@ See all the fail open feature limitations [here](https://github.com/cyralinc/clo
 
 ## Build
 
-This lambda is packaged as a Docker image and is publicly available at `gcr.io/cyralpublic/health-check-aws:<version>`
-where `<version>` is the version tag as seen in this repository.
+This lambda is packaged as a Docker image and must be published to the AWS account and region where
+the lambda will be deployed. The next steps will guide you through the publishing process:
 
-In order to **build and publish** this lambda to a different repository, edit the `.env` file informing the desired
-image and tag and then run `make build`.
+1. Create a repository named `sidecar-failopen-healthcheck-aws` on the target accound and region in
+AWS ECR.
+
+2. Export environment variables `AWS_REGION` and `AWS_ACCOUNT` with the target region and account:
+
+```bash
+# Example
+export AWS_REGION=us-east-1
+export AWS_ACCOUNT=0123456789
+```
+
+3. Log in to ECR in the command line:
+
+```bash
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT.dkr.ecr.us-east-1.amazonaws.com
+```
+
+4. Build and publish the lambda:
+
+```bash
+make
+```
 
 ## Execution Requirements
 
