@@ -13,11 +13,29 @@ from mysql import connector
 
 logger = logging.getLogger()
 
-# setting log levels for boto
-logging.getLogger('boto3').setLevel(logging.WARNING)
-logging.getLogger('botocore').setLevel(logging.WARNING)
-logging.getLogger('nose').setLevel(logging.WARNING)
 
+
+def get_log_level() -> int:
+    log_level = os.environ["LOG_LEVEL"]
+    if log_level == "DEBUG":
+        return logging.DEBUG
+    if log_level == "INFO":
+        return logging.INFO
+    if log_level == "WARNING":
+        return logging.WARNING
+    if log_level == "ERROR":
+        return logging.ERROR
+    if log_level == "FATAL":
+        return logging.FATAL
+    return logging.WARNING
+
+log_level = get_log_level()
+# setting log levels for boto
+logging.getLogger('boto3').setLevel(log_level)
+logging.getLogger('botocore').setLevel(log_level)
+logging.getLogger('nose').setLevel(log_level)
+
+logger.setLevel(log_level)
 
 def observe(client, sidecar_address, metric: str, status: int) -> None:
     """
