@@ -6,12 +6,17 @@ import logging
 import os
 from typing import Any, Dict, Tuple, Callable
 
-import boto3
 from botocore.exceptions import ClientError
+from botocore.session import Session
+from botocore.config import Config
 from mysql import connector
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+
+# setting log levels for boto
+logging.getLogger('boto3').setLevel(logging.WARNING)
+logging.getLogger('botocore').setLevel(logging.WARNING)
+logging.getLogger('nose').setLevel(logging.WARNING)
 
 
 def observe(client, sidecar_address, metric: str, status: int) -> None:
@@ -35,18 +40,26 @@ def observe(client, sidecar_address, metric: str, status: int) -> None:
 
 def get_database_configuration(
     secret_name: str,
-    session: boto3.Session,
+    session: Session,
     region_name: str
 ) -> Dict[str, Any]:
     """
         Gets the database configuration from secret manager on the secret_name location.
     """
-    client = session.client(
+    client = session.create_client(
         service_name='secretsmanager',
-        region_name=region_name
+        region_name=region_name,
+        config=Config(
+            connect_timeout=5,
+            read_timeout=60,
+            retries={'max_attempts': 2}
+        )
     )
 
     try:
+        logger.info(
+            f"Trying to reach secrets manager for DB credentials. Secret location: {secret_name}"
+        )
         get_secret_value_response = client.get_secret_value(
             SecretId=secret_name
         )
@@ -106,7 +119,7 @@ def try_connection(  # pylint: disable=too-many-arguments
 
 
 def lambda_handler(
-    session: boto3.Session,
+    session: Session,
     sidecar_host: str,
     sidecar_port: int,
     number_of_retries: int
@@ -114,7 +127,9 @@ def lambda_handler(
     """
         Creates a handler from the sidecar configuration and environment variables.
     """
-    cloudwatch_client = session.client('cloudwatch')
+
+    cloudwatch_client = session.create_client('cloutwatch', config=Config(
+        connect_timeout=5, read_timeout=60, retries={'max_attempts': 2}))
 
     def handler(_, __):
         # retrieves the configuration for the db from secret manager
@@ -132,6 +147,7 @@ def lambda_handler(
         sidecar_info = db_info.copy()
         sidecar_info["host"] = sidecar_host
         sidecar_info["port"] = sidecar_port
+        status = 0
 
         if number_of_retries < 0:
             raise Exception("number of retries must be bigger than 0")
@@ -193,12 +209,11 @@ def full_connection(
             return (False, 1)
 
 
-
 def entrypoint(event, context):
     """
     Entrypoint of the lambda function.
     """
-    session = boto3.Session()
+    session = Session()
 
     sidecar_host = os.environ['SIDECAR_ADDRESS']
     sidecar_port = int(os.environ['SIDECAR_PORT'])
