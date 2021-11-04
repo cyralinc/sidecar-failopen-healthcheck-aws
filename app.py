@@ -146,7 +146,7 @@ def lambda_handler(
         Creates a handler from the sidecar configuration and environment variables.
     """
 
-    cloudwatch_client = session.create_client('cloutwatch', config=Config(
+    cloudwatch_client = session.create_client('cloudwatch', config=Config(
         connect_timeout=5, read_timeout=60, retries={'max_attempts': 2}))
 
     def handler(_, __):
@@ -154,7 +154,7 @@ def lambda_handler(
         db_info: Dict[str, Any] = get_database_configuration(
             os.environ["REPO_SECRET"],
             session,
-            str(session.region_name)
+            os.environ['AWS_REGION']
         )
 
         db_info["host"] = os.environ["REPO_ADDRESS"]
