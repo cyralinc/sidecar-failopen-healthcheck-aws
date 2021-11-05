@@ -29,7 +29,7 @@ export AWS_REGION=us-east-1
 export AWS_ACCOUNT=0123456789
 ```
 
-3. Log in to ECR in the command line:
+3. Log in to ECR at the command line:
 
 ```bash
 aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT.dkr.ecr.us-east-1.amazonaws.com
@@ -43,9 +43,9 @@ make
 
 ## Execution Requirements
 
-In order to properly execute, the lambda needs IAM permissions to access AWS CloudWatch and AWS SecretsManager.
-It also needs networking access to the target sidecar, target repository and also to AWS CloudWatch and
-AWS SecretsManager.
+In order to properly execute, the lambda needs IAM permissions to access AWS CloudWatch and AWS Secrets Manager.
+It also needs network access to the target sidecar, target repository, and also to AWS CloudWatch and
+AWS Secrets Manager.
 
 The detailed IAM permissions required by the execution role are the following:
 
