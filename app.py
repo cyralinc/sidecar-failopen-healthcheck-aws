@@ -37,7 +37,7 @@ logging.getLogger('nose').setLevel(log_level)
 
 logger.setLevel(log_level)
 
-def observe(client, sidecar_address, metric: str, status: int) -> None:
+def observe(client, sidecar_host, metric: str, status: int) -> None:
     """
     Observe logs the status value on the metric
     """
@@ -46,7 +46,7 @@ def observe(client, sidecar_address, metric: str, status: int) -> None:
         Namespace='Route53PrivateHealthCheck',
         MetricData=[{
             'MetricName': f'{metric}: {healthcheck_name} ' +
-            f'(Health Check for resource {sidecar_address})',
+            f'(Health Check for resource {sidecar_host})',
             'Dimensions': [{
                 'Name': f'{metric} Health Check',
                 'Value': f'{metric} Health Check'
@@ -157,7 +157,7 @@ def lambda_handler(
             str(session.region_name)
         )
 
-        db_info["host"] = os.environ["REPO_ADDRESS"]
+        db_info["host"] = os.environ["REPO_HOST"]
         db_info["port"] = os.environ["REPO_PORT"]
         db_info["database"] = os.environ["REPO_DATABASE"]
 
@@ -233,7 +233,7 @@ def entrypoint(event, context):
     """
     session = Session()
 
-    sidecar_host = os.environ['SIDECAR_ADDRESS']
+    sidecar_host = os.environ['SIDECAR_HOST']
     sidecar_port = int(os.environ['SIDECAR_PORT'])
     number_of_retries = int(os.environ['N_RETRIES'])
 
