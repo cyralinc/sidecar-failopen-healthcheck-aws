@@ -1,0 +1,331 @@
+steps:
+  # Download the AWS credentials
+  - name: "gcr.io/cloud-builders/gsutil"
+    args:
+      - cp
+      - gs://cyral-keys/cloudbuild_aws_creds.env.enc
+      - ./cloudbuild_aws_creds.env.enc
+    id: "get-aws-creds"
+
+  # Decrypt the AWS creds
+  - name: "gcr.io/cloud-builders/gcloud"
+    args:
+      - kms
+      - decrypt
+      - --ciphertext-file=cloudbuild_aws_creds.env.enc
+      - --plaintext-file=cloudbuild_aws_creds.env
+      - --location=global
+      - --keyring=github-keyring
+      - --key=github-key
+    id: "decrypt-aws-creds"
+
+  # Export AWS creds
+  - name: "gcr.io/cloud-builders/gsutil"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        export $$(xargs <cloudbuild_aws_creds.env)
+    id: "echo-aws-creds"
+    waitFor: ["decrypt-aws-creds"]
+
+  - name: "python"
+    id: "download-dependencies"
+    args:
+      - pip
+      - install
+      - -r
+      - requirements.txt
+      - --target
+      - ./package
+
+  - name: "alpine"
+    id: "zip-dependencies"
+    args:
+      - zip
+      - -r
+      - fail-open-lambda.zip
+      - ./package
+    waitFor: ["download-dependencies"]
+
+  - name: "alpine"
+    id: "zip-lambda"
+    args:
+      - zip
+      - -g
+      - fail-open-lambda.zip
+      - app.py
+    waitFor: ["zip-dependencies"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-us-east-1"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-us-east-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-us-east-2"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-us-east-2
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+      
+  - name: "amazon/aws-cli"
+    id: "upload-us-west-1"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-us-west-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-us-west-2"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-us-west-2
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-af-south-1"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-af-south-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-ap-east-1"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-ap-east-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-ap-south-1"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-ap-south-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-ap-northeast-2"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-ap-northeast-2
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-ap-northeast-3"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-ap-northeast-3
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-ap-southeast-1"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-ap-southeast-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-ap-southeast-2"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-ap-southeast-2
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-ap-northeast-1"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-ap-northeast-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-ca-central-1"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-ca-central-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-eu-central-1"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-eu-central-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-eu-west-1"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-eu-west-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-eu-west-2"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-eu-west-2
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-eu-west-3"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-eu-west-3
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-eu-south-1"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-eu-south-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-eu-north-1"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-eu-north-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-me-south-1"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-me-south-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-sa-east-1"
+    args:
+      - s3api
+      - put-object
+      - --bucket
+      - cyral-public-assets-sa-east-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --body
+      - fail-open-lambda.zip
+    waitFor: ["zip-lambda", "decrypt-aws-creds"]
