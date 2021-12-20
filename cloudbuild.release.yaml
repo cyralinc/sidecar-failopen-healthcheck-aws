@@ -39,7 +39,7 @@ steps:
       - --target
       - ./package
 
-  - name: "alpine"
+  - name: "javieraviles/zip"
     id: "zip-dependencies"
     args:
       - zip
@@ -48,7 +48,7 @@ steps:
       - ./package
     waitFor: ["download-dependencies"]
 
-  - name: "alpine"
+  - name: "javieraviles/zip"
     id: "zip-lambda"
     args:
       - zip
