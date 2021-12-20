@@ -2,5 +2,5 @@ steps:
   - name: "cytopia/pylint"
     id: "pylint"
     args:
-      - "."
+      - "app.py"
   
