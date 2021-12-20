@@ -27,7 +27,7 @@ steps:
       - app.py
     waitFor: ["zip-dependencies"]
 
-  - name: "amazon/aws-cli"
+  - name: "gcr.io/cyral-dev/awscli"
     id: "upload-us-east-1"
     args:
       - s3api
@@ -43,7 +43,7 @@ steps:
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
 
-  - name: "amazon/aws-cli"
+  - name: "gcr.io/cyral-dev/awscli"
     id: "upload-us-east-2"
     args:
       - s3api
@@ -59,7 +59,7 @@ steps:
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
       
-  - name: "amazon/aws-cli"
+  - name: "gcr.io/cyral-dev/awscli"
     id: "upload-us-west-1"
     args:
       - s3api
@@ -75,7 +75,7 @@ steps:
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
 
-  - name: "amazon/aws-cli"
+  - name: "gcr.io/cyral-dev/awscli"
     id: "upload-us-west-2"
     args:
       - s3api
