@@ -1,34 +1,4 @@
 steps:
-  # Download the AWS credentials
-  - name: "gcr.io/cloud-builders/gsutil"
-    args:
-      - cp
-      - gs://cyral-keys/cloudbuild_aws_creds.env.enc
-      - ./cloudbuild_aws_creds.env.enc
-    id: "get-aws-creds"
-
-  # Decrypt the AWS creds
-  - name: "gcr.io/cloud-builders/gcloud"
-    args:
-      - kms
-      - decrypt
-      - --ciphertext-file=cloudbuild_aws_creds.env.enc
-      - --plaintext-file=cloudbuild_aws_creds.env
-      - --location=global
-      - --keyring=github-keyring
-      - --key=github-key
-    id: "decrypt-aws-creds"
-
-  # Export AWS creds
-  - name: "gcr.io/cloud-builders/gsutil"
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |
-        export $$(xargs <cloudbuild_aws_creds.env)
-    id: "echo-aws-creds"
-    waitFor: ["decrypt-aws-creds"]
-
   - name: "python"
     id: "download-dependencies"
     args:
@@ -68,7 +38,10 @@ steps:
       - fail-open/fail-open-lambda-${TAG_NAME}.zip
       - --body
       - fail-open-lambda.zip
-    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+    waitFor: ["zip-lambda"]
+    secretEnv:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
 
   - name: "amazon/aws-cli"
     id: "upload-us-east-2"
@@ -81,7 +54,10 @@ steps:
       - fail-open/fail-open-lambda-${TAG_NAME}.zip
       - --body
       - fail-open-lambda.zip
-    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+    waitFor: ["zip-lambda"]
+    secretEnv:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
       
   - name: "amazon/aws-cli"
     id: "upload-us-west-1"
@@ -94,7 +70,10 @@ steps:
       - fail-open/fail-open-lambda-${TAG_NAME}.zip
       - --body
       - fail-open-lambda.zip
-    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+    waitFor: ["zip-lambda"]
+    secretEnv:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
 
   - name: "amazon/aws-cli"
     id: "upload-us-west-2"
@@ -107,4 +86,15 @@ steps:
       - fail-open/fail-open-lambda-${TAG_NAME}.zip
       - --body
       - fail-open-lambda.zip
-    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+    waitFor: ["zip-lambda"]
+    secretEnv:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+
+
+
+secrets:
+  - kmsKeyName: projects/cyral-dev/locations/global/keyRings/github-keyring/cryptoKeys/github-key
+    secretEnv:
+      AWS_ACCESS_KEY_ID: CiUAkKjghrFlD5Evu7R+uUtWdshhQ0Zv6i5uLQi/VmKdZOTAx9fEEj4AqZer5L+klQsdc8NTYiYfQc45U2n7gfQG19tgCpGelO3g/1lQ9iCw60LMwcrLq6TtUVZ8gfxlXaVTSxlfSA==
+      AWS_SECRET_ACCESS_KEY: CiUAkKjghl2uM7oc/xEzIZ1DYT8tSeJv/I7Ldz6wtxA24FjlPtu2ElIAqZer5PYUlrPMDwmPxv7Uxmc71+MISV6DMAPc9TcY+oCVd1FbrEgnkshok/Nqs18xePvL28hB1KIRajDzO1bY2n2rySneY/d9jMybDQ33Iv8R
