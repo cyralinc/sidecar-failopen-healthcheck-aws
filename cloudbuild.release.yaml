@@ -96,5 +96,5 @@ steps:
 secrets:
   - kmsKeyName: projects/cyral-dev/locations/global/keyRings/github-keyring/cryptoKeys/github-key
     secretEnv:
-      AWS_ACCESS_KEY_ID: CiUAkKjghrFlD5Evu7R+uUtWdshhQ0Zv6i5uLQi/VmKdZOTAx9fEEj4AqZer5L+klQsdc8NTYiYfQc45U2n7gfQG19tgCpGelO3g/1lQ9iCw60LMwcrLq6TtUVZ8gfxlXaVTSxlfSA==
-      AWS_SECRET_ACCESS_KEY: CiUAkKjghl2uM7oc/xEzIZ1DYT8tSeJv/I7Ldz6wtxA24FjlPtu2ElIAqZer5PYUlrPMDwmPxv7Uxmc71+MISV6DMAPc9TcY+oCVd1FbrEgnkshok/Nqs18xePvL28hB1KIRajDzO1bY2n2rySneY/d9jMybDQ33Iv8R
+      AWS_ACCESS_KEY_ID: CiUAkKjghlJWeRIDhHwrrx+NIgKQEYSuYGIqgUszUgu6Dym7sr92Ej0AqZer5DfbPSkN9exrSFkQZN0isobw2Na7uo4l5QWQaKByeMiFCy75T9WFgL2C+HgzxkpcuUbq1IIVrf0r
+      AWS_SECRET_ACCESS_KEY: CiUAkKjghlPCc6V+4CpDpGXABTdX5OUewVLos1RTPzLA3jE5HSXnElEAqZer5J5mUREoTg/oc1krd4tYnG9VoWd5udlJdjTiogBd4KcxWYj/ZVQLP7MBuxFwp4kjBb7CgeedaELrsmfam7yCblWr03zxFG9ENLJW83Q=
