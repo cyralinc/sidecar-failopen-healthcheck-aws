@@ -42,7 +42,22 @@ steps:
     secretEnv:
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
-
+  - name: "gcr.io/cyral-dev/awscli"
+    id: "publish-us-east-1"
+    args:
+      - s3api
+      - put-object-acl
+      - --bucket
+      - cyral-public-assets-us-east-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --acl
+      - public-read
+    waitFor: ["upload-us-east-1"]
+    secretEnv:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+    
   - name: "gcr.io/cyral-dev/awscli"
     id: "upload-us-east-2"
     args:
@@ -55,6 +70,21 @@ steps:
       - --body
       - fail-open-lambda.zip
     waitFor: ["zip-lambda"]
+    secretEnv:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+  - name: "gcr.io/cyral-dev/awscli"
+    id: "publish-us-east-2"
+    args:
+      - s3api
+      - put-object-acl
+      - --bucket
+      - cyral-public-assets-us-east-2
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --acl
+      - public-read
+    waitFor: ["upload-us-east-2"]
     secretEnv:
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
@@ -74,6 +104,21 @@ steps:
     secretEnv:
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
+  - name: "gcr.io/cyral-dev/awscli"
+    id: "publish-us-west-1"
+    args:
+      - s3api
+      - put-object-acl
+      - --bucket
+      - cyral-public-assets-us-west-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --acl
+      - public-read
+    waitFor: ["upload-us-west-1"]
+    secretEnv:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
 
   - name: "gcr.io/cyral-dev/awscli"
     id: "upload-us-west-2"
@@ -87,6 +132,21 @@ steps:
       - --body
       - fail-open-lambda.zip
     waitFor: ["zip-lambda"]
+    secretEnv:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+  - name: "gcr.io/cyral-dev/awscli"
+    id: "publish-us-west-2"
+    args:
+      - s3api
+      - put-object-acl
+      - --bucket
+      - cyral-public-assets-us-west-2
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --acl
+      - public-read
+    waitFor: ["upload-us-west-2"]
     secretEnv:
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
