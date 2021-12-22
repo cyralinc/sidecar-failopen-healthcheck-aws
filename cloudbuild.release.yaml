@@ -3,8 +3,8 @@ steps:
   - name: "gcr.io/cloud-builders/gsutil"
     args:
       - cp
-      - gs://cyral-keys/cloudbuild_aws_creds.env.enc
-      - ./cloudbuild_aws_creds.env.enc
+      - gs://cyral-keys/cloudbuild_aws_credentials.enc
+      - ./cloudbuild_aws_credentials.enc
     id: "get-aws-creds"
 
   # Decrypt the AWS creds
@@ -12,22 +12,16 @@ steps:
     args:
       - kms
       - decrypt
-      - --ciphertext-file=cloudbuild_aws_creds.env.enc
-      - --plaintext-file=cloudbuild_aws_creds.env
+      - --ciphertext-file=cloudbuild_aws_credentials.enc
+      - --plaintext-file=/root/.aws/credentials
       - --location=global
       - --keyring=github-keyring
       - --key=github-key
-    id: "decrypt-aws-creds"
+    id: "decrypt-aws-key"
+    volumes:
+      - name: "aws"
+        path: /root/.aws
 
-  # Export AWS creds
-  - name: "gcr.io/cloud-builders/gsutil"
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |
-        export $$(xargs <cloudbuild_aws_creds.env)
-    id: "echo-aws-creds"
-    waitFor: ["decrypt-aws-creds"]
 
   - name: "python"
     id: "download-dependencies"
@@ -61,6 +55,8 @@ steps:
     id: "upload-us-east-1"
     args:
       - s3api
+      - --profile
+      - cyral-production-public-assets
       - put-object
       - --bucket
       - cyral-public-assets-us-east-1
@@ -68,12 +64,34 @@ steps:
       - fail-open/fail-open-lambda-${TAG_NAME}.zip
       - --body
       - fail-open-lambda.zip
-    waitFor: ["zip-lambda", "decrypt-aws-creds"]
-
-  - name: "amazon/aws-cli"
+    waitFor: ["zip-lambda", "decrypt-aws-key"]
+    volumes:
+      - name: "aws"
+        path: /root/.aws
+  - name: "gcr.io/cyral-dev/awscli"
+    id: "publish-us-east-1"
+    args:
+      - s3api
+      - --profile
+      - cyral-production-public-assets
+      - put-object-acl
+      - --bucket
+      - cyral-public-assets-us-east-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --acl
+      - public-read
+    waitFor: ["upload-us-east-1"]
+    volumes:
+      - name: "aws"
+        path: /root/.aws
+    
+  - name: "gcr.io/cyral-dev/awscli"
     id: "upload-us-east-2"
     args:
       - s3api
+      - --profile
+      - cyral-production-public-assets
       - put-object
       - --bucket
       - cyral-public-assets-us-east-2
@@ -81,12 +99,34 @@ steps:
       - fail-open/fail-open-lambda-${TAG_NAME}.zip
       - --body
       - fail-open-lambda.zip
-    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+    waitFor: ["zip-lambda", "decrypt-aws-key"]
+    volumes:
+      - name: "aws"
+        path: /root/.aws
+  - name: "gcr.io/cyral-dev/awscli"
+    id: "publish-us-east-2"
+    args:
+      - s3api
+      - --profile
+      - cyral-production-public-assets
+      - put-object-acl
+      - --bucket
+      - cyral-public-assets-us-east-2
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --acl
+      - public-read
+    waitFor: ["upload-us-east-2"]
+    volumes:
+      - name: "aws"
+        path: /root/.aws
       
   - name: "amazon/aws-cli"
     id: "upload-us-west-1"
     args:
       - s3api
+      - --profile
+      - cyral-production-public-assets
       - put-object
       - --bucket
       - cyral-public-assets-us-west-1
@@ -94,12 +134,34 @@ steps:
       - fail-open/fail-open-lambda-${TAG_NAME}.zip
       - --body
       - fail-open-lambda.zip
-    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+    waitFor: ["zip-lambda", "decrypt-aws-key"]
+    volumes:
+      - name: "aws"
+        path: /root/.aws
+  - name: "gcr.io/cyral-dev/awscli"
+    id: "publish-us-west-1"
+    args:
+      - s3api
+      - --profile
+      - cyral-production-public-assets
+      - put-object-acl
+      - --bucket
+      - cyral-public-assets-us-west-1
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --acl
+      - public-read
+    waitFor: ["upload-us-west-1"]
+    volumes:
+      - name: "aws"
+        path: /root/.aws
 
   - name: "amazon/aws-cli"
     id: "upload-us-west-2"
     args:
       - s3api
+      - --profile
+      - cyral-production-public-assets
       - put-object
       - --bucket
       - cyral-public-assets-us-west-2
@@ -107,4 +169,25 @@ steps:
       - fail-open/fail-open-lambda-${TAG_NAME}.zip
       - --body
       - fail-open-lambda.zip
-    waitFor: ["zip-lambda", "decrypt-aws-creds"]
+    waitFor: ["zip-lambda", "decrypt-aws-key"]
+    volumes:
+      - name: "aws"
+        path: /root/.aws
+  - name: "gcr.io/cyral-dev/awscli"
+    id: "publish-us-west-2"
+    args:
+      - s3api
+      - --profile
+      - cyral-production-public-assets
+      - put-object-acl
+      - --bucket
+      - cyral-public-assets-us-west-2
+      - --key
+      - fail-open/fail-open-lambda-${TAG_NAME}.zip
+      - --acl
+      - public-read
+    waitFor: ["upload-us-west-2"]
+    volumes:
+      - name: "aws"
+        path: /root/.aws
+
