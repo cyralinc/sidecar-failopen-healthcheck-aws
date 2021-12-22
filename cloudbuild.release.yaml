@@ -68,7 +68,7 @@ steps:
     volumes:
       - name: "aws"
         path: /root/.aws
-  - name: "gcr.io/cyral-dev/awscli"
+  - name: "amazon/aws-cli"
     id: "publish-us-east-1"
     args:
       - s3api
@@ -86,7 +86,7 @@ steps:
       - name: "aws"
         path: /root/.aws
     
-  - name: "gcr.io/cyral-dev/awscli"
+  - name: "amazon/aws-cli"
     id: "upload-us-east-2"
     args:
       - s3api
@@ -103,7 +103,7 @@ steps:
     volumes:
       - name: "aws"
         path: /root/.aws
-  - name: "gcr.io/cyral-dev/awscli"
+  - name: "amazon/aws-cli"
     id: "publish-us-east-2"
     args:
       - s3api
@@ -138,7 +138,7 @@ steps:
     volumes:
       - name: "aws"
         path: /root/.aws
-  - name: "gcr.io/cyral-dev/awscli"
+  - name: "amazon/aws-cli"
     id: "publish-us-west-1"
     args:
       - s3api
@@ -173,7 +173,7 @@ steps:
     volumes:
       - name: "aws"
         path: /root/.aws
-  - name: "gcr.io/cyral-dev/awscli"
+  - name: "amazon/aws-cli"
     id: "publish-us-west-2"
     args:
       - s3api
