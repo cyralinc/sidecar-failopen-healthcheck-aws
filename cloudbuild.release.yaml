@@ -1,27 +1,4 @@
 steps:
-  # Download the AWS credentials
-  - name: "gcr.io/cloud-builders/gsutil"
-    args:
-      - cp
-      - gs://cyral-keys/cloudbuild_aws_credentials.enc
-      - ./cloudbuild_aws_credentials.enc
-    id: "get-aws-creds"
-
-  # Decrypt the AWS creds
-  - name: "gcr.io/cloud-builders/gcloud"
-    args:
-      - kms
-      - decrypt
-      - --ciphertext-file=cloudbuild_aws_credentials.enc
-      - --plaintext-file=/root/.aws/credentials
-      - --location=global
-      - --keyring=github-keyring
-      - --key=github-key
-    id: "decrypt-aws-key"
-    volumes:
-      - name: "aws"
-        path: /root/.aws
-
 
   - name: "python"
     id: "download-dependencies"
@@ -64,10 +41,8 @@ steps:
       - fail-open/fail-open-lambda-${TAG_NAME}.zip
       - --body
       - fail-open-lambda.zip
-    waitFor: ["zip-lambda", "decrypt-aws-key"]
-    volumes:
-      - name: "aws"
-        path: /root/.aws
+    waitFor: ["zip-lambda"]
+    secretEnv: [AWS_ACCES_KEY_ID, AWS_SECRET_ACCESS_KEY]
   - name: "amazon/aws-cli"
     id: "publish-us-east-1"
     args:
@@ -82,9 +57,7 @@ steps:
       - --acl
       - public-read
     waitFor: ["upload-us-east-1"]
-    volumes:
-      - name: "aws"
-        path: /root/.aws
+    secretEnv: [AWS_ACCES_KEY_ID, AWS_SECRET_ACCESS_KEY]
     
   - name: "amazon/aws-cli"
     id: "upload-us-east-2"
@@ -99,10 +72,9 @@ steps:
       - fail-open/fail-open-lambda-${TAG_NAME}.zip
       - --body
       - fail-open-lambda.zip
-    waitFor: ["zip-lambda", "decrypt-aws-key"]
-    volumes:
-      - name: "aws"
-        path: /root/.aws
+    waitFor: ["zip-lambda"]
+    secretEnv: [AWS_ACCES_KEY_ID, AWS_SECRET_ACCESS_KEY]
+
   - name: "amazon/aws-cli"
     id: "publish-us-east-2"
     args:
@@ -117,9 +89,7 @@ steps:
       - --acl
       - public-read
     waitFor: ["upload-us-east-2"]
-    volumes:
-      - name: "aws"
-        path: /root/.aws
+    secretEnv: [AWS_ACCES_KEY_ID, AWS_SECRET_ACCESS_KEY]
       
   - name: "amazon/aws-cli"
     id: "upload-us-west-1"
@@ -134,10 +104,9 @@ steps:
       - fail-open/fail-open-lambda-${TAG_NAME}.zip
       - --body
       - fail-open-lambda.zip
-    waitFor: ["zip-lambda", "decrypt-aws-key"]
-    volumes:
-      - name: "aws"
-        path: /root/.aws
+    waitFor: ["zip-lambda"]
+    secretEnv: [AWS_ACCES_KEY_ID, AWS_SECRET_ACCESS_KEY]
+
   - name: "amazon/aws-cli"
     id: "publish-us-west-1"
     args:
@@ -152,9 +121,7 @@ steps:
       - --acl
       - public-read
     waitFor: ["upload-us-west-1"]
-    volumes:
-      - name: "aws"
-        path: /root/.aws
+    secretEnv: [AWS_ACCES_KEY_ID, AWS_SECRET_ACCESS_KEY]
 
   - name: "amazon/aws-cli"
     id: "upload-us-west-2"
@@ -169,10 +136,9 @@ steps:
       - fail-open/fail-open-lambda-${TAG_NAME}.zip
       - --body
       - fail-open-lambda.zip
-    waitFor: ["zip-lambda", "decrypt-aws-key"]
-    volumes:
-      - name: "aws"
-        path: /root/.aws
+    waitFor: ["zip-lambda"]
+    secretEnv: [AWS_ACCES_KEY_ID, AWS_SECRET_ACCESS_KEY]
+        
   - name: "amazon/aws-cli"
     id: "publish-us-west-2"
     args:
@@ -187,7 +153,12 @@ steps:
       - --acl
       - public-read
     waitFor: ["upload-us-west-2"]
-    volumes:
-      - name: "aws"
-        path: /root/.aws
+    secretEnv: [AWS_ACCES_KEY_ID, AWS_SECRET_ACCESS_KEY]
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/cyral-dev/secrets/github-aws-key-secret/versions/1
+      env: AWS_SECRET_ACCESS_KEY
+    - versionName: projects/cyral-dev/secrets/github-aws-key-id/versions/1
+      env: AWS_ACCESS_KEY_ID
 
