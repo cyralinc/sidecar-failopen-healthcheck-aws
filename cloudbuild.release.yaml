@@ -13,7 +13,8 @@ steps:
   - name: "javieraviles/zip"
     id: "zip-dependencies"
     args:
-      - cd package
+      - cd
+      - package
       - "&&"
       - zip
       - -r
