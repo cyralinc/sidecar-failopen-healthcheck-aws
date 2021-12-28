@@ -16,26 +16,26 @@ logger = logging.getLogger()
 
 
 def get_log_level() -> int:
-    log_level = os.environ["LOG_LEVEL"]
-    if log_level == "DEBUG":
+    LOG_LEVEL = os.environ["LOG_LEVEL"]
+    if LOG_LEVEL == "DEBUG":
         return logging.DEBUG
-    if log_level == "INFO":
+    if LOG_LEVEL == "INFO":
         return logging.INFO
-    if log_level == "WARNING":
+    if LOG_LEVEL == "WARNING":
         return logging.WARNING
-    if log_level == "ERROR":
+    if LOG_LEVEL == "ERROR":
         return logging.ERROR
-    if log_level == "FATAL":
+    if LOG_LEVEL == "FATAL":
         return logging.FATAL
     return logging.WARNING
 
-log_level = get_log_level()
+level = get_log_level()
 # setting log levels for boto
-logging.getLogger('boto3').setLevel(log_level)
-logging.getLogger('botocore').setLevel(log_level)
-logging.getLogger('nose').setLevel(log_level)
+logging.getLogger('boto3').setLevel(level)
+logging.getLogger('botocore').setLevel(level)
+logging.getLogger('nose').setLevel(level)
 
-logger.setLevel(log_level)
+logger.setLevel(level)
 
 def observe(client, sidecar_host, metric: str, status: int) -> None:
     """
@@ -101,7 +101,7 @@ def get_database_configuration(
             f"Secret in wrong format found on {secret_name}")
 
 
-def try_connection(  # pylint: disable=too-many-arguments
+def try_connection(
     host: str,
     port: int,
     username: str,
