@@ -13,13 +13,12 @@ steps:
   - name: "javieraviles/zip"
     id: "zip-dependencies"
     args:
-      - cd package
-      - "&&"
       - zip
       - -r
       - ../fail-open-lambda.zip
       - ./*
     waitFor: ["download-dependencies"]
+    dir: /workspace/package
 
   - name: "javieraviles/zip"
     id: "zip-lambda"
