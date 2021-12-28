@@ -13,10 +13,12 @@ steps:
   - name: "javieraviles/zip"
     id: "zip-dependencies"
     args:
+      - cd package
+      - "&&"
       - zip
       - -r
-      - fail-open-lambda.zip
-      - ./package
+      - ../fail-open-lambda.zip
+      - ./*
     waitFor: ["download-dependencies"]
 
   - name: "javieraviles/zip"
@@ -54,7 +56,7 @@ steps:
       - public-read
     waitFor: ["upload-us-east-1"]
     secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
-    
+
   - name: "amazon/aws-cli"
     id: "upload-us-east-2"
     args:
@@ -82,7 +84,7 @@ steps:
       - public-read
     waitFor: ["upload-us-east-2"]
     secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
-      
+
   - name: "amazon/aws-cli"
     id: "upload-us-west-1"
     args:
@@ -124,7 +126,7 @@ steps:
       - fail-open-lambda.zip
     waitFor: ["zip-lambda"]
     secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
-        
+
   - name: "amazon/aws-cli"
     id: "publish-us-west-2"
     args:
