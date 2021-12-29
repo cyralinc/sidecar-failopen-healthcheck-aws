@@ -32,6 +32,9 @@ steps:
   - name: "amazon/aws-cli"
     id: "upload-us-east-1"
     entrypoint: "scripts/publish.sh"
+    env:
+    - "BUCKET_KEY_PREFIX=fail-open/"
+    - "VERSION=$TAG_NAME"
     args:
       - us-east-1
       - us-east-2

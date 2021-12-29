@@ -3,4 +3,52 @@ steps:
     id: "pylint"
     args:
       - "app.py"
-  
+  - name: "python"
+    id: "download-dependencies"
+    args:
+      - pip
+      - install
+      - -r
+      - requirements.txt
+      - --target
+      - ./package
+
+  - name: "javieraviles/zip"
+    id: "zip-dependencies"
+    args:
+      - zip
+      - -r
+      - ../fail-open-lambda.zip
+      - .
+    waitFor: ["download-dependencies"]
+    dir: package
+
+  - name: "javieraviles/zip"
+    id: "zip-lambda"
+    args:
+      - zip
+      - -g
+      - fail-open-lambda.zip
+      - app.py
+    waitFor: ["zip-dependencies"]
+
+  - name: "amazon/aws-cli"
+    id: "upload-us-east-1"
+    entrypoint: "scripts/publish.sh"
+    env:
+      - "BUCKET_KEY_PREFIX=fail-open/dev/"
+      - "VERSION=$BUILD_ID"
+    args:
+      - us-east-1
+      - us-east-2
+      - us-west-1
+      - us-west-2
+    waitFor: ["zip-lambda"]
+    secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/cyral-dev/secrets/github-aws-key-secret/versions/3
+      env: AWS_SECRET_ACCESS_KEY
+    - versionName: projects/cyral-dev/secrets/github-aws-key-id/versions/3
+      env: AWS_ACCESS_KEY_ID

@@ -4,11 +4,11 @@ for region in $@
 do
     aws s3api put-object \
         --bucket cyral-public-assets-$region \
-        --key fail-open/fail-open-lambda-${TAG_NAME}.zip \
+        --key ${BUCKET_KEY_PREFIX}/fail-open-lambda-${VERSION}.zip \
         --body fail-open-lambda.zip
 
     aws s3api put-object-acl \
         --bucket cyral-public-assets-$region \
-        --key fail-open/fail-open-lambda-${TAG_NAME}.zip \
+        --key ${BUCKET_KEY_PREFIX}/fail-open-lambda-${VERSION}.zip \
         --acl public-read
 done
