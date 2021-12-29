@@ -31,113 +31,13 @@ steps:
 
   - name: "amazon/aws-cli"
     id: "upload-us-east-1"
+    entrypoint: "scripts/publish.sh"
     args:
-      - s3api
-      - put-object
-      - --bucket
-      - cyral-public-assets-us-east-1
-      - --key
-      - fail-open/fail-open-lambda-${TAG_NAME}.zip
-      - --body
-      - fail-open-lambda.zip
+      - us-east-1
+      - us-east-2
+      - us-west-1
+      - us-west-2
     waitFor: ["zip-lambda"]
-    secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
-  - name: "amazon/aws-cli"
-    id: "publish-us-east-1"
-    args:
-      - s3api
-      - put-object-acl
-      - --bucket
-      - cyral-public-assets-us-east-1
-      - --key
-      - fail-open/fail-open-lambda-${TAG_NAME}.zip
-      - --acl
-      - public-read
-    waitFor: ["upload-us-east-1"]
-    secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
-
-  - name: "amazon/aws-cli"
-    id: "upload-us-east-2"
-    args:
-      - s3api
-      - put-object
-      - --bucket
-      - cyral-public-assets-us-east-2
-      - --key
-      - fail-open/fail-open-lambda-${TAG_NAME}.zip
-      - --body
-      - fail-open-lambda.zip
-    waitFor: ["zip-lambda"]
-    secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
-
-  - name: "amazon/aws-cli"
-    id: "publish-us-east-2"
-    args:
-      - s3api
-      - put-object-acl
-      - --bucket
-      - cyral-public-assets-us-east-2
-      - --key
-      - fail-open/fail-open-lambda-${TAG_NAME}.zip
-      - --acl
-      - public-read
-    waitFor: ["upload-us-east-2"]
-    secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
-
-  - name: "amazon/aws-cli"
-    id: "upload-us-west-1"
-    args:
-      - s3api
-      - put-object
-      - --bucket
-      - cyral-public-assets-us-west-1
-      - --key
-      - fail-open/fail-open-lambda-${TAG_NAME}.zip
-      - --body
-      - fail-open-lambda.zip
-    waitFor: ["zip-lambda"]
-    secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
-
-  - name: "amazon/aws-cli"
-    id: "publish-us-west-1"
-    args:
-      - s3api
-      - put-object-acl
-      - --bucket
-      - cyral-public-assets-us-west-1
-      - --key
-      - fail-open/fail-open-lambda-${TAG_NAME}.zip
-      - --acl
-      - public-read
-    waitFor: ["upload-us-west-1"]
-    secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
-
-  - name: "amazon/aws-cli"
-    id: "upload-us-west-2"
-    args:
-      - s3api
-      - put-object
-      - --bucket
-      - cyral-public-assets-us-west-2
-      - --key
-      - fail-open/fail-open-lambda-${TAG_NAME}.zip
-      - --body
-      - fail-open-lambda.zip
-    waitFor: ["zip-lambda"]
-    secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
-
-  - name: "amazon/aws-cli"
-    id: "publish-us-west-2"
-    args:
-      - s3api
-      - put-object-acl
-      - --bucket
-      - cyral-public-assets-us-west-2
-      - --key
-      - fail-open/fail-open-lambda-${TAG_NAME}.zip
-      - --acl
-      - public-read
-    waitFor: ["upload-us-west-2"]
     secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
 
 availableSecrets:
