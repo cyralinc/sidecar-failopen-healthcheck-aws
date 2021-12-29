@@ -9,7 +9,9 @@ from typing import Any, Dict, Tuple, Callable
 from botocore.exceptions import ClientError
 from botocore.session import Session
 from botocore.config import Config
-from mysql import connector
+import mysql.connector as mysql
+import cx_Oracle
+import psycopg2
 
 logger = logging.getLogger()
 
@@ -101,13 +103,37 @@ def get_database_configuration(
             f"Secret in wrong format found on {secret_name}")
 
 
-def try_connection(
+
+def mysql_connect(*args):
+    cnx = mysql.connect(*args)
+    return cnx
+
+def oracle_connect(host, port, username, database, password, connection_timeout = 2):
+    cnx = cx_Oracle.connect(
+        connection_timeout=connection_timeout,
+        user=username,
+        dsn=f'{host}:{port}/{database}',
+        password=password,
+    )
+    return cnx
+
+def pg_connect(*args):
+    cnx = psycopg2.connect(*args)
+    return cnx
+
+repo_connectors = {
+        "mysql": mysql_connect,
+        "oracle": oracle_connect,
+    }
+
+def try_connection(  # pylint: disable=too-many-arguments
+    repo_type: str,
     host: str,
     port: int,
     username: str,
     database: str,
     password: str,
-    timeout: int = 2
+    connection_timeout: int = 2
 ):
     """
         Tries to establish a connection to a mysql repository with the given configurations.
@@ -115,14 +141,7 @@ def try_connection(
     try:
         logger.info(
             f"trying to establish mysql connection to {host}:{port}")
-        cnx = connector.connect(
-            connection_timeout=timeout,
-            user=username,
-            database=database,
-            password=password,
-            host=host,
-            port=port
-        )
+        cnx = repo_connectors[repo_type](host, port, username, database, password, connection_timeout)
         cursor = cnx.cursor()
 
         # sample query to just test dispatcher connectivity
@@ -131,8 +150,8 @@ def try_connection(
         logger.info(
             f'successful connection connecting to mysql on {host}:{port}')
 
-    except connector.Error as err:
-        logger.info(f'error connecting to mysql on {host}:{port}: {err}')
+    except mysql.Error as err:
+        logger.info(f'error connecting to {repo_type} on {host}:{port}: {err}')
         raise err
 
 
@@ -159,6 +178,7 @@ def lambda_handler(
 
         db_info["host"] = os.environ["REPO_HOST"]
         db_info["port"] = os.environ["REPO_PORT"]
+        db_info["repo_type"] = os.environ["REPO_TYPE"]
         db_info["database"] = os.environ["REPO_DATABASE"]
 
         # uses the same credentials but different address for sidecar connection
@@ -205,7 +225,7 @@ def full_connection(
         logger.info("connection succeeded, setting metric as healthy")
         return (True, 1)
 
-    except connector.Error as err_sidecar:
+    except mysql.Error as err_sidecar:
         logger.info('Falling back to direct connection...')
         try:
             logger.info(err_sidecar)
@@ -217,7 +237,7 @@ def full_connection(
             logger.info(
                 f"DB alive but sidecar failing, setting metric as unhealthy. Error: {err_sidecar}")
             return (False, 0)
-        except connector.Error as err_db:
+        except mysql.Error as err_db:
 
             # if both sidecar and DB are failing, either the db is failing
             # or there is a connection issue. Either way, no need to trigger the
