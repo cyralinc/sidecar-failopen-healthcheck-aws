@@ -3,6 +3,7 @@ steps:
     id: "pylint"
     args:
       - "app.py"
+
   - name: "python"
     id: "download-dependencies"
     args:
@@ -30,13 +31,13 @@ steps:
       - -g
       - fail-open-lambda.zip
       - app.py
-    waitFor: ["zip-dependencies"]
+    waitFor: ["download-dependencies"]
 
   - name: "amazon/aws-cli"
     id: "upload-us-east-1"
     entrypoint: "scripts/publish.sh"
     env:
-      - "BUCKET_KEY_PREFIX=fail-open/dev/"
+      - "BUCKET_KEY_PREFIX=fail-open/dev"
       - "VERSION=$BUILD_ID"
     args:
       - us-east-1

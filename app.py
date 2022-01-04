@@ -10,7 +10,6 @@ from botocore.exceptions import ClientError
 from botocore.session import Session
 from botocore.config import Config
 import mysql.connector as mysql
-import cx_Oracle
 import psycopg2
 
 logger = logging.getLogger()
@@ -108,22 +107,19 @@ def mysql_connect(*args):
     cnx = mysql.connect(*args)
     return cnx
 
-def oracle_connect(host, port, username, database, password, connection_timeout = 2):
-    cnx = cx_Oracle.connect(
-        connection_timeout=connection_timeout,
-        user=username,
-        dsn=f'{host}:{port}/{database}',
-        password=password,
+def pg_connect(host, port, username, database, password, *_):
+    cnx = psycopg2.connect(
+            dbname=database,
+            user=username,
+            password=password,
+            host=host,
+            port=port
     )
-    return cnx
-
-def pg_connect(*args):
-    cnx = psycopg2.connect(*args)
     return cnx
 
 repo_connectors = {
         "mysql": mysql_connect,
-        "oracle": oracle_connect,
+        "pg": pg_connect,
     }
 
 def try_connection(  # pylint: disable=too-many-arguments
@@ -140,7 +136,7 @@ def try_connection(  # pylint: disable=too-many-arguments
     """
     try:
         logger.info(
-            f"trying to establish mysql connection to {host}:{port}")
+            f"trying to establish {repo_type} connection to {host}:{port}")
         cnx = repo_connectors[repo_type](host, port, username, database, password, connection_timeout)
         cursor = cnx.cursor()
 
