@@ -37,19 +37,18 @@ steps:
     id: "upload-us-east-1"
     entrypoint: "scripts/publish.sh"
     env:
-      - "BUCKET_KEY_PREFIX=fail-open/dev"
+      - "BUCKET=cyral-dev-artifacts"
+      - "BUCKET_KEY_PREFIX=fail-open"
       - "VERSION=$BUILD_ID"
+      - "APPEND_REGION=false"
     args:
       - us-east-1
-      - us-east-2
-      - us-west-1
-      - us-west-2
     waitFor: ["zip-lambda"]
     secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
 
 availableSecrets:
   secretManager:
-    - versionName: projects/cyral-dev/secrets/github-aws-key-secret/versions/3
+    - versionName: projects/cyral-dev/secrets/github-aws-private-key-secret/versions/1
       env: AWS_SECRET_ACCESS_KEY
-    - versionName: projects/cyral-dev/secrets/github-aws-key-id/versions/3
+    - versionName: projects/cyral-dev/secrets/github-aws-private-key-id/versions/1
       env: AWS_ACCESS_KEY_ID
