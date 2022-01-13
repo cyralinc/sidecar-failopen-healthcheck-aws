@@ -38,19 +38,17 @@ logging.getLogger('nose').setLevel(level)
 
 logger.setLevel(level)
 
-def observe(client, sidecar_host, metric: str, status: int) -> None:
+def observe(client, sidecar_host, repo_type, repo_host, stack_name, status) -> None:
     """
     Observe logs the status value on the metric
     """
-    healthcheck_name = os.environ['FAIL_OPEN_CF_STACK_NAME']
     return client.put_metric_data(
-        Namespace='Route53PrivateHealthCheck',
+        Namespace='CyralSidecarHealthChecks',
         MetricData=[{
-            'MetricName': f'{metric}: {healthcheck_name} ' +
-            f'(Health Check for resource {sidecar_host})',
+            'MetricName': f'{sidecar_host}-{repo_type}-{repo_host}: {stack_name} (Health Check for resource {sidecar_host})',
             'Dimensions': [{
-                'Name': f'{metric} Health Check',
-                'Value': f'{metric} Health Check'
+                'Name': f'{sidecar_host} {repo_type} {repo_host} Health Check',
+                'Value': f'{sidecar_host} {repo_type} {repo_host} Health Check'
             }],
             'Unit': 'None',
             'Value': status
@@ -195,7 +193,7 @@ def lambda_handler(
 
             logger.info("health check failed, retrying...")
         observe(cloudwatch_client, sidecar_host,
-                os.environ["FAIL_OPEN_SIDECAR_NAME"], status)
+                db_info["repo_type"], db_info["host"],os.environ["FAIL_OPEN_CF_STACK_NAME"], status)
     return handler
 
 

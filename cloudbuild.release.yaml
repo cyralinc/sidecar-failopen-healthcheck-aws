@@ -16,18 +16,10 @@ steps:
       - zip
       - -r
       - ../fail-open-lambda.zip
+      - ../fail-open-lambda.zip
       - .
     waitFor: ["download-dependencies"]
     dir: package
-
-  - name: "javieraviles/zip"
-    id: "zip-lambda"
-    args:
-      - zip
-      - -g
-      - fail-open-lambda.zip
-      - app.py
-    waitFor: ["download-dependencies"]
 
   - name: "amazon/aws-cli"
     id: "upload-us-east-1"
@@ -40,7 +32,7 @@ steps:
       - us-east-2
       - us-west-1
       - us-west-2
-    waitFor: ["zip-lambda"]
+    waitFor: ["zip-dependencies"]
     secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
 
 availableSecrets:
