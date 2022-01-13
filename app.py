@@ -17,7 +17,7 @@ logger = logging.getLogger()
 
 
 def get_log_level() -> int:
-    LOG_LEVEL = os.environ["LOG_LEVEL"]
+    LOG_LEVEL = os.environ["FAIL_OPEN_LOG_LEVEL"]
     if LOG_LEVEL == "DEBUG":
         return logging.DEBUG
     if LOG_LEVEL == "INFO":
@@ -42,7 +42,7 @@ def observe(client, sidecar_host, metric: str, status: int) -> None:
     """
     Observe logs the status value on the metric
     """
-    healthcheck_name = os.environ['CF_STACK_NAME']
+    healthcheck_name = os.environ['FAIL_OPEN_CF_STACK_NAME']
     return client.put_metric_data(
         Namespace='Route53PrivateHealthCheck',
         MetricData=[{
@@ -167,15 +167,15 @@ def lambda_handler(
     def handler(_, __):
         # retrieves the configuration for the db from secret manager
         db_info: Dict[str, Any] = get_database_configuration(
-            os.environ["REPO_SECRET"],
+            os.environ["FAIL_OPEN_REPO_SECRET"],
             session,
             os.environ['AWS_REGION']
         )
 
-        db_info["host"] = os.environ["REPO_HOST"]
-        db_info["port"] = os.environ["REPO_PORT"]
-        db_info["repo_type"] = os.environ["REPO_TYPE"]
-        db_info["database"] = os.environ["REPO_DATABASE"]
+        db_info["host"] = os.environ["FAIL_OPEN_REPO_HOST"]
+        db_info["port"] = os.environ["FAIL_OPEN_REPO_PORT"]
+        db_info["repo_type"] = os.environ["FAIL_OPEN_REPO_TYPE"]
+        db_info["database"] = os.environ["FAIL_OPEN_REPO_DATABASE"]
 
         # uses the same credentials but different address for sidecar connection
         sidecar_info = db_info.copy()
@@ -195,7 +195,7 @@ def lambda_handler(
 
             logger.info("health check failed, retrying...")
         observe(cloudwatch_client, sidecar_host,
-                os.environ["SIDECAR_NAME"], status)
+                os.environ["FAIL_OPEN_SIDECAR_NAME"], status)
     return handler
 
 
@@ -249,9 +249,9 @@ def entrypoint(event, context):
     """
     session = Session()
 
-    sidecar_host = os.environ['SIDECAR_HOST']
-    sidecar_port = int(os.environ['SIDECAR_PORT'])
-    number_of_retries = int(os.environ['N_RETRIES'])
+    sidecar_host = os.environ['FAIL_OPEN_SIDECAR_HOST']
+    sidecar_port = int(os.environ['FAIL_OPEN_SIDECAR_PORT'])
+    number_of_retries = int(os.environ['FAIL_OPEN_N_RETRIES'])
 
     lambda_handler(
         session,
