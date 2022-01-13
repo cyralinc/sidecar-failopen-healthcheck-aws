@@ -9,14 +9,15 @@ from typing import Any, Dict, Tuple, Callable
 from botocore.exceptions import ClientError
 from botocore.session import Session
 from botocore.config import Config
-from mysql import connector
+import mysql.connector as mysql
+import psycopg2
 
 logger = logging.getLogger()
 
 
 
 def get_log_level() -> int:
-    LOG_LEVEL = os.environ["LOG_LEVEL"]
+    LOG_LEVEL = os.environ["FAIL_OPEN_LOG_LEVEL"]
     if LOG_LEVEL == "DEBUG":
         return logging.DEBUG
     if LOG_LEVEL == "INFO":
@@ -37,19 +38,17 @@ logging.getLogger('nose').setLevel(level)
 
 logger.setLevel(level)
 
-def observe(client, sidecar_host, metric: str, status: int) -> None:
+def observe(client, sidecar_host, repo_type, repo_host, stack_name, status) -> None:
     """
     Observe logs the status value on the metric
     """
-    healthcheck_name = os.environ['CF_STACK_NAME']
     return client.put_metric_data(
-        Namespace='Route53PrivateHealthCheck',
+        Namespace='CyralSidecarHealthChecks',
         MetricData=[{
-            'MetricName': f'{metric}: {healthcheck_name} ' +
-            f'(Health Check for resource {sidecar_host})',
+            'MetricName': f'{sidecar_host}-{repo_type}-{repo_host}: {stack_name} (Health Check for resource {sidecar_host})',
             'Dimensions': [{
-                'Name': f'{metric} Health Check',
-                'Value': f'{metric} Health Check'
+                'Name': f'{sidecar_host} {repo_type} {repo_host} Health Check',
+                'Value': f'{sidecar_host} {repo_type} {repo_host} Health Check'
             }],
             'Unit': 'None',
             'Value': status
@@ -101,28 +100,45 @@ def get_database_configuration(
             f"Secret in wrong format found on {secret_name}")
 
 
-def try_connection(
+
+def mysql_connect(*args):
+    cnx = mysql.connect(*args)
+    return cnx
+
+def pg_connect(host, port, username, database, password, *_):
+    cnx = psycopg2.connect(
+            dbname=database,
+            user=username,
+            password=password,
+            host=host,
+            port=port
+    )
+    return cnx
+
+repo_connectors = {
+        "mysql": mysql_connect,
+        "postgresql": pg_connect,
+    }
+
+
+class CouldntConnectException(Exception):
+    pass
+def try_connection(  # pylint: disable=too-many-arguments
+    repo_type: str,
     host: str,
     port: int,
     username: str,
     database: str,
     password: str,
-    timeout: int = 2
+    connection_timeout: int = 2
 ):
     """
         Tries to establish a connection to a mysql repository with the given configurations.
     """
     try:
         logger.info(
-            f"trying to establish mysql connection to {host}:{port}")
-        cnx = connector.connect(
-            connection_timeout=timeout,
-            user=username,
-            database=database,
-            password=password,
-            host=host,
-            port=port
-        )
+            f"trying to establish {repo_type} connection to {host}:{port}")
+        cnx = repo_connectors[repo_type](host, port, username, database, password, connection_timeout)
         cursor = cnx.cursor()
 
         # sample query to just test dispatcher connectivity
@@ -131,9 +147,13 @@ def try_connection(
         logger.info(
             f'successful connection connecting to mysql on {host}:{port}')
 
-    except connector.Error as err:
-        logger.info(f'error connecting to mysql on {host}:{port}: {err}')
-        raise err
+    except mysql.Error as err:
+        logger.info(f'error connecting to {repo_type} on {host}:{port}: {err}')
+        raise CouldntConnectException(err)
+    except psycopg2.OperationalError as err:
+        logger.info(f'error connecting to {repo_type} on {host}:{port}: {err}')
+        raise CouldntConnectException(err)
+
 
 
 def lambda_handler(
@@ -152,14 +172,15 @@ def lambda_handler(
     def handler(_, __):
         # retrieves the configuration for the db from secret manager
         db_info: Dict[str, Any] = get_database_configuration(
-            os.environ["REPO_SECRET"],
+            os.environ["FAIL_OPEN_REPO_SECRET"],
             session,
             os.environ['AWS_REGION']
         )
 
-        db_info["host"] = os.environ["REPO_HOST"]
-        db_info["port"] = os.environ["REPO_PORT"]
-        db_info["database"] = os.environ["REPO_DATABASE"]
+        db_info["host"] = os.environ["FAIL_OPEN_REPO_HOST"]
+        db_info["port"] = os.environ["FAIL_OPEN_REPO_PORT"]
+        db_info["repo_type"] = os.environ["FAIL_OPEN_REPO_TYPE"]
+        db_info["database"] = os.environ["FAIL_OPEN_REPO_DATABASE"]
 
         # uses the same credentials but different address for sidecar connection
         sidecar_info = db_info.copy()
@@ -179,7 +200,7 @@ def lambda_handler(
 
             logger.info("health check failed, retrying...")
         observe(cloudwatch_client, sidecar_host,
-                os.environ["SIDECAR_NAME"], status)
+                db_info["repo_type"], db_info["host"],os.environ["FAIL_OPEN_CF_STACK_NAME"], status)
     return handler
 
 
@@ -205,7 +226,7 @@ def full_connection(
         logger.info("connection succeeded, setting metric as healthy")
         return (True, 1)
 
-    except connector.Error as err_sidecar:
+    except CouldntConnectException as err_sidecar:
         logger.info('Falling back to direct connection...')
         try:
             logger.info(err_sidecar)
@@ -217,7 +238,7 @@ def full_connection(
             logger.info(
                 f"DB alive but sidecar failing, setting metric as unhealthy. Error: {err_sidecar}")
             return (False, 0)
-        except connector.Error as err_db:
+        except CouldntConnectException as err_db:
 
             # if both sidecar and DB are failing, either the db is failing
             # or there is a connection issue. Either way, no need to trigger the
@@ -233,9 +254,9 @@ def entrypoint(event, context):
     """
     session = Session()
 
-    sidecar_host = os.environ['SIDECAR_HOST']
-    sidecar_port = int(os.environ['SIDECAR_PORT'])
-    number_of_retries = int(os.environ['N_RETRIES'])
+    sidecar_host = os.environ['FAIL_OPEN_SIDECAR_HOST']
+    sidecar_port = int(os.environ['FAIL_OPEN_SIDECAR_PORT'])
+    number_of_retries = int(os.environ['FAIL_OPEN_N_RETRIES'])
 
     lambda_handler(
         session,

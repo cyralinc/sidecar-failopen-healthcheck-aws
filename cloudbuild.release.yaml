@@ -16,31 +16,23 @@ steps:
       - zip
       - -r
       - ../fail-open-lambda.zip
+      - ../fail-open-lambda.zip
       - .
     waitFor: ["download-dependencies"]
     dir: package
-
-  - name: "javieraviles/zip"
-    id: "zip-lambda"
-    args:
-      - zip
-      - -g
-      - fail-open-lambda.zip
-      - app.py
-    waitFor: ["zip-dependencies"]
 
   - name: "amazon/aws-cli"
     id: "upload-us-east-1"
     entrypoint: "scripts/publish.sh"
     env:
-    - "BUCKET_KEY_PREFIX=fail-open/"
+    - "BUCKET_KEY_PREFIX=fail-open"
     - "VERSION=$TAG_NAME"
     args:
       - us-east-1
       - us-east-2
       - us-west-1
       - us-west-2
-    waitFor: ["zip-lambda"]
+    waitFor: ["zip-dependencies"]
     secretEnv: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
 
 availableSecrets:
