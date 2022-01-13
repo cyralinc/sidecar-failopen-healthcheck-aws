@@ -120,6 +120,9 @@ repo_connectors = {
         "postgresql": pg_connect,
     }
 
+
+class CouldntConnectException(Exception):
+    pass
 def try_connection(  # pylint: disable=too-many-arguments
     repo_type: str,
     host: str,
@@ -146,7 +149,11 @@ def try_connection(  # pylint: disable=too-many-arguments
 
     except mysql.Error as err:
         logger.info(f'error connecting to {repo_type} on {host}:{port}: {err}')
-        raise err
+        raise CouldntConnectException(err)
+    except psycopg2.OperationalError as err:
+        logger.info(f'error connecting to {repo_type} on {host}:{port}: {err}')
+        raise CouldntConnectException(err)
+
 
 
 def lambda_handler(
@@ -219,7 +226,7 @@ def full_connection(
         logger.info("connection succeeded, setting metric as healthy")
         return (True, 1)
 
-    except mysql.Error as err_sidecar:
+    except CouldntConnectException as err_sidecar:
         logger.info('Falling back to direct connection...')
         try:
             logger.info(err_sidecar)
@@ -231,7 +238,7 @@ def full_connection(
             logger.info(
                 f"DB alive but sidecar failing, setting metric as unhealthy. Error: {err_sidecar}")
             return (False, 0)
-        except mysql.Error as err_db:
+        except CouldntConnectException as err_db:
 
             # if both sidecar and DB are failing, either the db is failing
             # or there is a connection issue. Either way, no need to trigger the

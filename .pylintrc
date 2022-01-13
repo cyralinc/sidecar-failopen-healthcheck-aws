@@ -105,7 +105,8 @@ disable=
     format,
     import-error,
     logging-fstring-interpolation,
-    too-many-arguments
+    too-many-arguments,
+    W0707
 
 
 
