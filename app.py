@@ -119,7 +119,7 @@ def pg_connect(host, port, username, database, password, *_):
 
 repo_connectors = {
         "mysql": mysql_connect,
-        "pg": pg_connect,
+        "postgresql": pg_connect,
     }
 
 def try_connection(  # pylint: disable=too-many-arguments
